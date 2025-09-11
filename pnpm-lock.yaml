@@ -46,7 +46,7 @@ importers:
         specifier: ^3
         version: 3.3.1
       '@tailwindcss/postcss':
-        specifier: ^4
+        specifier: ^4.1.13
         version: 4.1.13
       '@types/bcryptjs':
         specifier: ^3.0.0
@@ -67,7 +67,7 @@ importers:
         specifier: 15.5.3
         version: 15.5.3(eslint@9.35.0(jiti@2.5.1))(typescript@5.9.2)
       tailwindcss:
-        specifier: ^4
+        specifier: ^4.1.13
         version: 4.1.13
       typescript:
         specifier: ^5
