@@ -189,7 +189,7 @@ Testing and bug fixes
 
 File Structure
 reptracking/
-├── app/
+├── src/app/
 │   ├── (auth)/
 │   │   ├── login/
 │   │   └── register/
@@ -198,11 +198,11 @@ reptracking/
 │   ├── session/
 │   ├── progress/
 │   └── layout.tsx
-├── components/
+├── src/components/
 │   ├── ui/
 │   ├── workout/
 │   └── charts/
-├── lib/
+├── src/lib/
 │   ├── prisma.ts
 │   ├── auth.ts
 │   └── utils.ts
