@@ -1,0 +1,15 @@
+{
+  "name": "RepTracking - Gym Workout Tracker",
+  "short_name": "RepTracking",
+  "description": "Mobile-first gym workout tracking app for tracking your progress, managing workout plans, and achieving your fitness goals.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [],
+  "categories": ["health", "fitness", "sports"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

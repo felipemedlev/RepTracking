@@ -1,6 +1,7 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { BottomNav } from "@/components/layout/BottomNav"
+import { SessionProvider } from "@/components/providers/SessionProvider"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -17,14 +18,6 @@ export const metadata: Metadata = {
   title: "RepTracking - Gym Workout Tracker",
   description: "Mobile-first gym workout tracking app for tracking your progress, managing workout plans, and achieving your fitness goals.",
   manifest: "/manifest.json",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
-  },
-  themeColor: "#3b82f6",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -33,15 +26,15 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  icons: {
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-    icon: [
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-    ],
-  },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#3b82f6",
 }
 
 export default function RootLayout({
@@ -52,12 +45,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-full bg-gray-50`}>
-        <div className="flex flex-col h-full">
-          <main className="flex-1 overflow-auto pb-nav">
-            {children}
-          </main>
-          <BottomNav />
-        </div>
+        <SessionProvider>
+          <div className="flex flex-col h-full">
+            <main className="flex-1 overflow-auto pb-nav">
+              {children}
+            </main>
+            <BottomNav />
+          </div>
+        </SessionProvider>
       </body>
     </html>
   )
