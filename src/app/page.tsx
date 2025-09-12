@@ -198,7 +198,7 @@ export default function Home() {
                   <div
                     key={sessionData.id}
                     className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-50/50 rounded-xl cursor-pointer hover:bg-gradient-to-r hover:from-primary-50 hover:to-blue-50 transition-all duration-200 border border-gray-100 hover:border-primary-200 active:scale-[0.99]"
-                    onClick={() => router.push(`/sessions/${sessionData.id}`)}
+                    onClick={() => router.push('/session')}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-white rounded-lg shadow-sm">

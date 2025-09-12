@@ -32,6 +32,7 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<SessionData[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'recent'>('active')
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -90,6 +91,23 @@ export default function SessionsPage() {
     return sets.reduce((total, set) => {
       return total + ((set.weight || 0) * (set.reps || 0))
     }, 0)
+  }
+
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        setSessions(prev => prev.filter(s => s.id !== sessionId))
+        setDeleteConfirm(null)
+      } else {
+        console.error('Failed to delete session')
+      }
+    } catch (error) {
+      console.error('Error deleting session:', error)
+    }
   }
 
   if (status === 'loading' || loading) {
@@ -238,19 +256,50 @@ export default function SessionsPage() {
               </Card>
             ) : (
               recentSessions.map((sessionData) => (
-                <Card key={sessionData.id} className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <Card key={sessionData.id} className="hover:bg-gray-50 transition-colors">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div>
+                      <div className="flex-1">
                         <CardTitle>{sessionData.workoutPlan.name}</CardTitle>
                         <p className="text-sm text-gray-600">
                           {formatDate(sessionData.completedAt!)} • {getSessionDuration(sessionData.startedAt, sessionData.completedAt)}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-gray-900">{sessionData.sets.length} sets</div>
-                        <div className="text-xs text-gray-500">
-                          {getTotalVolume(sessionData.sets).toLocaleString()} lbs
+                      <div className="flex items-center space-x-2">
+                        <div className="text-right mr-3">
+                          <div className="text-sm font-medium text-gray-900">{sessionData.sets.length} sets</div>
+                          <div className="text-xs text-gray-500">
+                            {getTotalVolume(sessionData.sets).toLocaleString()} lbs
+                          </div>
+                        </div>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // TODO: Navigate to session edit page
+                              console.log('Edit session:', sessionData.id)
+                            }}
+                            className="p-2"
+                          >
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeleteConfirm(sessionData.id)
+                            }}
+                            className="p-2"
+                          >
+                            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -275,6 +324,38 @@ export default function SessionsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-red-900">Delete Session</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to delete this workout session? This action cannot be undone and all exercise data will be permanently lost.
+              </p>
+              <div className="flex space-x-3">
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteSession(deleteConfirm)}
+                  className="flex-1"
+                >
+                  Delete Session
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

@@ -13,7 +13,9 @@
       "Bash(netsh advfirewall firewall show rule:*)",
       "Bash(netsh:*)",
       "Bash(prisma generate:*)",
-      "Bash(pnpm prisma generate:*)"
+      "Bash(pnpm prisma generate:*)",
+      "Bash(findstr:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
