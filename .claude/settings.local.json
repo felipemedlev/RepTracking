@@ -11,7 +11,9 @@
       "Bash(pnpm lint:*)",
       "Bash(ipconfig)",
       "Bash(netsh advfirewall firewall show rule:*)",
-      "Bash(netsh:*)"
+      "Bash(netsh:*)",
+      "Bash(prisma generate:*)",
+      "Bash(pnpm prisma generate:*)"
     ],
     "deny": [],
     "ask": []
