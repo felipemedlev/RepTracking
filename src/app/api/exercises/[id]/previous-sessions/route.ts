@@ -68,9 +68,9 @@ export async function GET(
       .slice(0, limit)
       .map(session => ({
         ...session,
-        maxWeight: Math.max(...session.sets.map((s: any) => s.weight || 0)),
+        maxWeight: Math.max(...session.sets.map((s: {weight?: number}) => s.weight || 0)),
         totalSets: session.sets.length,
-        totalReps: session.sets.reduce((sum: number, s: any) => sum + s.reps, 0),
+        totalReps: session.sets.reduce((sum: number, s: {reps: number}) => sum + s.reps, 0),
       }))
 
     return NextResponse.json(previousSessions)

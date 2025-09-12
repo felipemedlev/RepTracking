@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       // Create workout exercises
       if (exercises.length > 0) {
         await tx.workoutExercise.createMany({
-          data: exercises.map((exercise: any, index: number) => ({
+          data: exercises.map((exercise: {exerciseId: string, targetSets: number, targetReps?: number, targetWeight?: number, restTime?: number}, index: number) => ({
             workoutPlanId: plan.id,
             exerciseId: exercise.exerciseId,
             targetSets: exercise.targetSets,

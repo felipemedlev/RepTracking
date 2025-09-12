@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const workoutPlanId = searchParams.get('workoutPlanId')
 
-    let whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       userId: session.user.id,
     }
 

@@ -3,14 +3,12 @@
 import * as React from "react"
 import { 
   Play, 
-  Pause, 
   Check, 
   Plus, 
   Timer, 
   Dumbbell, 
   Target, 
   TrendingUp,
-  MoreHorizontal,
   Settings
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -18,7 +16,6 @@ import { Button } from "./Button"
 import { Card, CardContent, CardHeader, CardTitle } from "./Card"
 import { WorkoutTimer } from "./workout-timer"
 import { SetInput } from "./set-input"
-import { ExerciseCard } from "./exercise-card"
 import { Badge } from "./Badge"
 import { Progress } from "./Progress"
 import { 

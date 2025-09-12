@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const search = searchParams.get('search')
 
-    let whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       OR: [
         { isCustom: false }, // Default exercises
         { userId: session.user.id }, // User's custom exercises

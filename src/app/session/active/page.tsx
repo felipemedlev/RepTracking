@@ -600,7 +600,7 @@ export default function SessionPage() {
                 <p className="text-sm text-orange-700 mb-1">Rest between sets</p>
                 {notificationPermission === 'granted' && (
                   <p className="text-xs text-orange-600 mb-3">
-                    🔔 You'll get notified when rest is complete
+                    🔔 You&apos;ll get notified when rest is complete
                   </p>
                 )}
                 {notificationPermission === 'denied' && (
