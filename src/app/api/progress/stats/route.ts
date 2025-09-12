@@ -39,13 +39,13 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        createdAt: 'asc',
+        completedAt: 'asc',
       },
     })
 
     // Calculate total volume and average weight
     const totalVolume = sets.reduce((sum, set) => {
-      return sum + (set.weight || 0) * set.reps
+      return sum + (set.weight || 0) * (set.reps || 0)
     }, 0)
 
     const weightSets = sets.filter(set => set.weight && set.weight > 0)
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const volumeByDate = new Map<string, number>()
     sets.forEach(set => {
       const date = new Date(set.session.startedAt).toISOString().split('T')[0]
-      const volume = (set.weight || 0) * set.reps
+      const volume = (set.weight || 0) * (set.reps || 0)
       volumeByDate.set(date, (volumeByDate.get(date) || 0) + volume)
     })
 
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     const exerciseMaxWeights = new Map<string, Array<{ date: string, weight: number }>>()
     weightSets.forEach(set => {
       const exerciseName = set.exercise.name
-      const date = new Date(set.session.startTime).toISOString().split('T')[0]
+      const date = new Date(set.session.startedAt).toISOString().split('T')[0]
       const weight = set.weight || 0
 
       if (!exerciseMaxWeights.has(exerciseName)) {
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       const stats = exerciseStatsMap.get(exerciseName)!
       stats.maxWeight = Math.max(stats.maxWeight, set.weight || 0)
       stats.totalSets += 1
-      stats.totalReps += set.reps
+      stats.totalReps += (set.reps || 0)
     })
 
     const exerciseStats = Array.from(exerciseStatsMap.entries())

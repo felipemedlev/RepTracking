@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -13,22 +13,23 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '5')
 
     // Get previous sessions for this exercise
     const previousSets = await prisma.set.findMany({
       where: {
-        exerciseId: params.id,
+        exerciseId: id,
         session: {
           userId: session.user.id,
-          endTime: { not: null }, // Only completed sessions
+          completedAt: { not: null }, // Only completed sessions
         },
       },
       include: {
         session: {
           select: {
-            startTime: true,
+            startedAt: true,
             workoutPlan: {
               select: {
                 name: true,
@@ -38,7 +39,7 @@ export async function GET(
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        completedAt: 'desc',
       },
       take: limit * 10, // Get more sets to group by session
     })
@@ -50,7 +51,7 @@ export async function GET(
       if (!sessionMap.has(sessionKey)) {
         sessionMap.set(sessionKey, {
           sessionId: set.sessionId,
-          date: set.session.startTime,
+          date: set.session.startedAt,
           workoutPlan: set.session.workoutPlan.name,
           sets: [],
         })
@@ -58,7 +59,6 @@ export async function GET(
       sessionMap.get(sessionKey).sets.push({
         reps: set.reps,
         weight: set.weight,
-        notes: set.notes,
       })
     })
 

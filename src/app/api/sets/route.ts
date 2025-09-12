@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { sessionId, exerciseId, reps, weight, restTime, notes } = body
+    const { sessionId, exerciseId, reps, weight } = body
 
     if (!sessionId || !exerciseId || reps === undefined) {
       return NextResponse.json(
@@ -41,14 +41,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Exercise not found' }, { status: 404 })
     }
 
+    // Get the next set number for this exercise in this session
+    const existingSets = await prisma.set.count({
+      where: {
+        sessionId,
+        exerciseId,
+      },
+    })
+
     const newSet = await prisma.set.create({
       data: {
         sessionId,
         exerciseId,
+        setNumber: existingSets + 1,
         reps: parseInt(reps),
         weight: weight ? parseFloat(weight) : null,
-        restTime: restTime ? parseInt(restTime) : null,
-        notes: notes || null,
+        completedAt: new Date(),
       },
       include: {
         exercise: {

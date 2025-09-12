@@ -30,6 +30,12 @@ export function ExerciseSelector({ onExerciseSelect, selectedExercises }: Exerci
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [createFormData, setCreateFormData] = useState({
+    name: '',
+    category: 'push'
+  })
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     fetchExercises()
@@ -50,6 +56,37 @@ export function ExerciseSelector({ onExerciseSelect, selectedExercises }: Exerci
       console.error('Error fetching exercises:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateExercise = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!createFormData.name.trim()) return
+
+    setCreating(true)
+    try {
+      const response = await fetch('/api/exercises', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: createFormData.name.trim(),
+          category: createFormData.category,
+        }),
+      })
+
+      if (response.ok) {
+        const newExercise = await response.json()
+        setCreateFormData({ name: '', category: 'push' })
+        setShowCreateForm(false)
+        fetchExercises() // Refresh the exercise list
+        onExerciseSelect(newExercise) // Auto-select the new exercise
+      }
+    } catch (error) {
+      console.error('Error creating exercise:', error)
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -98,7 +135,94 @@ export function ExerciseSelector({ onExerciseSelect, selectedExercises }: Exerci
             </Button>
           ))}
         </div>
+        
+        {/* Add Custom Exercise Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowCreateForm(true)}
+          className="w-full border-dashed border-2 text-gray-600 hover:text-gray-800 hover:border-gray-400"
+          disabled={showCreateForm}
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Create Custom Exercise
+        </Button>
       </div>
+
+      {/* Create Exercise Form */}
+      {showCreateForm && (
+        <Card className="border-primary-200 bg-primary-50">
+          <CardContent className="p-4">
+            <form onSubmit={handleCreateExercise} className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium text-gray-900">Create Custom Exercise</h3>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowCreateForm(false)
+                    setCreateFormData({ name: '', category: 'push' })
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </Button>
+              </div>
+              
+              <Input
+                label="Exercise Name"
+                placeholder="e.g., Incline Dumbbell Press"
+                value={createFormData.name}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, name: e.target.value }))}
+                required
+              />
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category
+                </label>
+                <select
+                  value={createFormData.category}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                >
+                  <option value="push">Push (Chest, Shoulders, Triceps)</option>
+                  <option value="pull">Pull (Back, Biceps)</option>
+                  <option value="legs">Legs (Quads, Hamstrings, Glutes)</option>
+                  <option value="core">Core/Abs</option>
+                </select>
+              </div>
+              
+              <div className="flex space-x-3">
+                <Button
+                  type="submit"
+                  isLoading={creating}
+                  disabled={creating || !createFormData.name.trim()}
+                  className="flex-1"
+                >
+                  Create Exercise
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowCreateForm(false)
+                    setCreateFormData({ name: '', category: 'push' })
+                  }}
+                  disabled={creating}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Exercise List */}
       <div className="space-y-2 max-h-96 overflow-y-auto">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/Button"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card"
+import { Card, CardHeader, CardTitle, CardContent, StatCard } from "@/components/ui/Card"
 import { Header } from "@/components/layout/Header"
 
 interface DashboardStats {
@@ -109,85 +109,118 @@ export default function Home() {
       />
       
       <div className="px-4 py-6 space-y-6">
-        {/* Quick Stats */}
+        {/* Enhanced Quick Stats with StatCard */}
         {session && stats && (
-          <div className="grid grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-2xl font-bold text-primary-600">
-                  {stats.totalWorkouts}
-                </div>
-                <div className="text-xs text-gray-600">Sessions</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-2xl font-bold text-primary-600">
-                  {stats.totalSets}
-                </div>
-                <div className="text-xs text-gray-600">Total Sets</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-2xl font-bold text-primary-600">
-                  {stats.totalReps.toLocaleString()}
-                </div>
-                <div className="text-xs text-gray-600">Total Reps</div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard
+              title="Sessions"
+              value={stats.totalWorkouts}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              }
+            />
+            <StatCard
+              title="Total Sets" 
+              value={stats.totalSets}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              }
+            />
+            <StatCard
+              title="Total Reps"
+              value={stats.totalReps}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              }
+            />
           </div>
         )}
 
-        {/* Start Workout Button */}
+        {/* Enhanced Action Buttons */}
         <div className="space-y-4">
           <Button 
-            className="w-full h-14 text-lg font-semibold"
+            size="xl"
+            className="w-full"
             onClick={() => router.push('/workouts')}
+            hapticFeedback={true}
+            leftIcon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            }
           >
-            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
             {session ? 'Start Workout' : 'View Workouts'}
           </Button>
           
-          {session && (
+          <div className="grid grid-cols-2 gap-3">
             <Button 
               variant="outline" 
-              className="w-full h-12"
-              onClick={() => router.push('/progress')}
+              size="lg"
+              onClick={() => session ? router.push('/metrics') : router.push('/login')}
+              leftIcon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              }
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              View Progress
+              Body Metrics
             </Button>
-          )}
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => router.push('/calculator')}
+              leftIcon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              }
+            >
+              1RM Calculator
+            </Button>
+          </div>
         </div>
 
-        {/* Recent Sessions */}
+        {/* Enhanced Recent Sessions */}
         {session && stats && stats.recentSessions.length > 0 && (
-          <Card>
+          <Card variant="elevated" hover>
             <CardHeader>
-              <CardTitle>Recent Sessions</CardTitle>
+              <CardTitle size="lg">Recent Sessions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {stats.recentSessions.map((session) => (
+                {stats.recentSessions.map((sessionData) => (
                   <div
-                    key={session.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => router.push(`/sessions/${session.id}`)}
+                    key={sessionData.id}
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-50/50 rounded-xl cursor-pointer hover:bg-gradient-to-r hover:from-primary-50 hover:to-blue-50 transition-all duration-200 border border-gray-100 hover:border-primary-200 active:scale-[0.99]"
+                    onClick={() => router.push(`/sessions/${sessionData.id}`)}
                   >
-                    <div>
-                      <div className="font-medium">{session.workoutPlan.name}</div>
-                      <div className="text-sm text-gray-600">
-                        {formatDate(session.startTime)}
-                        {session.endTime && ` • ${getSessionDuration(session.startTime, session.endTime)}`}
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                        <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">{sessionData.workoutPlan.name}</div>
+                        <div className="text-sm text-gray-600">
+                          {formatDate(sessionData.startTime)}
+                          {sessionData.endTime && ` • ${getSessionDuration(sessionData.startTime, sessionData.endTime)}`}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-sm text-primary-600 font-medium">
-                      {session._count.sets} sets
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm text-primary-600 font-semibold">
+                        {sessionData._count.sets} sets
+                      </div>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
                 ))}

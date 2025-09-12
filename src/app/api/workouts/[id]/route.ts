@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -13,9 +13,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const workoutPlan = await prisma.workoutPlan.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
       include: {
@@ -48,7 +49,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -56,6 +57,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const { name, description, exercises } = body
 
@@ -66,7 +68,7 @@ export async function PUT(
     // Verify ownership
     const existingPlan = await prisma.workoutPlan.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     })
@@ -79,7 +81,7 @@ export async function PUT(
     const updatedPlan = await prisma.$transaction(async (tx) => {
       // Update the workout plan
       const plan = await tx.workoutPlan.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           name,
           description: description || null,
@@ -88,14 +90,14 @@ export async function PUT(
 
       // Delete existing exercises
       await tx.workoutExercise.deleteMany({
-        where: { workoutPlanId: params.id },
+        where: { workoutPlanId: id },
       })
 
       // Create new exercises if provided
       if (exercises && Array.isArray(exercises) && exercises.length > 0) {
         await tx.workoutExercise.createMany({
           data: exercises.map((exercise: any, index: number) => ({
-            workoutPlanId: params.id,
+            workoutPlanId: id,
             exerciseId: exercise.exerciseId,
             targetSets: exercise.targetSets,
             targetReps: exercise.targetReps,
@@ -110,7 +112,7 @@ export async function PUT(
 
     // Fetch the complete updated workout plan
     const completeWorkoutPlan = await prisma.workoutPlan.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         workoutExercises: {
           include: {
@@ -132,7 +134,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -140,10 +142,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     // Verify ownership and delete
     const deletedPlan = await prisma.workoutPlan.deleteMany({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     })

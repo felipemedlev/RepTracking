@@ -10,6 +10,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Clean up old incomplete sessions (older than 24 hours)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    await prisma.session.deleteMany({
+      where: {
+        userId: session.user.id,
+        completedAt: null,
+        startedAt: {
+          lt: twentyFourHoursAgo,
+        },
+      },
+    })
+
     const { searchParams } = new URL(request.url)
     const workoutPlanId = searchParams.get('workoutPlanId')
 
@@ -23,7 +35,11 @@ export async function GET(request: NextRequest) {
 
     const sessions = await prisma.session.findMany({
       where: whereClause,
-      include: {
+      select: {
+        id: true,
+        startedAt: true,
+        completedAt: true,
+        workoutPlanId: true,
         workoutPlan: {
           select: {
             name: true,
@@ -41,7 +57,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        startTime: 'desc',
+        startedAt: 'desc',
       },
     })
 
@@ -96,6 +112,19 @@ export async function POST(request: NextRequest) {
                 order: 'asc',
               },
             },
+          },
+        },
+        sets: {
+          include: {
+            exercise: {
+              select: {
+                name: true,
+                category: true,
+              },
+            },
+          },
+          orderBy: {
+            completedAt: 'asc',
           },
         },
       },

@@ -28,9 +28,11 @@ export default function MetricsPage() {
   const [metricsData, setMetricsData] = useState<MetricsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingMetric, setEditingMetric] = useState<BodyMetric | null>(null)
   const [formData, setFormData] = useState({
     weight: '',
     bodyFatPercentage: '',
+    recordedAt: new Date().toISOString().split('T')[0], // Default to today
   })
   const [submitting, setSubmitting] = useState(false)
 
@@ -68,27 +70,68 @@ export default function MetricsPage() {
 
     setSubmitting(true)
     try {
-      const response = await fetch('/api/metrics', {
-        method: 'POST',
+      const url = editingMetric ? `/api/metrics/${editingMetric.id}` : '/api/metrics'
+      const method = editingMetric ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           weight: formData.weight ? parseFloat(formData.weight) : undefined,
           bodyFatPercentage: formData.bodyFatPercentage ? parseFloat(formData.bodyFatPercentage) : undefined,
+          recordedAt: formData.recordedAt,
         }),
       })
 
       if (response.ok) {
-        setFormData({ weight: '', bodyFatPercentage: '' })
-        setShowAddForm(false)
+        resetForm()
         fetchMetricsData()
       }
     } catch (error) {
-      console.error('Error adding metrics:', error)
+      console.error('Error saving metrics:', error)
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleEdit = (metric: BodyMetric) => {
+    setEditingMetric(metric)
+    setFormData({
+      weight: metric.weight?.toString() || '',
+      bodyFatPercentage: metric.bodyFatPercentage?.toString() || '',
+      recordedAt: metric.recordedAt.split('T')[0], // Convert to YYYY-MM-DD format
+    })
+    setShowAddForm(true)
+  }
+
+  const handleDelete = async (metricId: string) => {
+    if (!confirm('Are you sure you want to delete this metric entry?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/metrics/${metricId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        fetchMetricsData()
+      }
+    } catch (error) {
+      console.error('Error deleting metric:', error)
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      weight: '',
+      bodyFatPercentage: '',
+      recordedAt: new Date().toISOString().split('T')[0],
+    })
+    setShowAddForm(false)
+    setEditingMetric(null)
   }
 
   const formatDate = (dateString: string) => {
@@ -147,11 +190,11 @@ export default function MetricsPage() {
           <Card className="border-primary-200 bg-primary-50">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Add New Metrics</CardTitle>
+                <CardTitle>{editingMetric ? 'Edit Metrics' : 'Add New Metrics'}</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowAddForm(false)}
+                  onClick={resetForm}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -161,6 +204,13 @@ export default function MetricsPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                <Input
+                  label="Date"
+                  type="date"
+                  value={formData.recordedAt}
+                  onChange={(e) => setFormData(prev => ({ ...prev, recordedAt: e.target.value }))}
+                  required
+                />
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Weight (lbs)"
@@ -190,12 +240,12 @@ export default function MetricsPage() {
                     disabled={submitting || (!formData.weight && !formData.bodyFatPercentage)}
                     className="flex-1"
                   >
-                    Save Metrics
+                    {editingMetric ? 'Update Metrics' : 'Save Metrics'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowAddForm(false)}
+                    onClick={resetForm}
                     disabled={submitting}
                   >
                     Cancel
@@ -314,7 +364,7 @@ export default function MetricsPage() {
               <div className="space-y-3">
                 {metricsData.metrics.slice(0, 10).map((metric) => (
                   <div key={metric.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
+                    <div className="flex-1">
                       <div className="text-sm text-gray-600">
                         {new Date(metric.recordedAt).toLocaleDateString('en-US', {
                           weekday: 'short',
@@ -323,18 +373,40 @@ export default function MetricsPage() {
                           year: 'numeric'
                         })}
                       </div>
+                      <div className="flex space-x-4 text-sm mt-1">
+                        {metric.weight && (
+                          <span className="font-medium text-primary-600">
+                            {metric.weight} lbs
+                          </span>
+                        )}
+                        {metric.bodyFatPercentage && (
+                          <span className="font-medium text-green-600">
+                            {metric.bodyFatPercentage}%
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex space-x-4 text-sm">
-                      {metric.weight && (
-                        <span className="font-medium text-primary-600">
-                          {metric.weight} lbs
-                        </span>
-                      )}
-                      {metric.bodyFatPercentage && (
-                        <span className="font-medium text-green-600">
-                          {metric.bodyFatPercentage}%
-                        </span>
-                      )}
+                    <div className="flex items-center space-x-2 ml-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(metric)}
+                        className="p-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(metric.id)}
+                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </Button>
                     </div>
                   </div>
                 ))}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header, BackButton } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -34,8 +34,9 @@ interface WorkoutPlan {
   }[]
 }
 
-export default function EditWorkoutPlanPage({ params }: { params: { id: string } }) {
+export default function EditWorkoutPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const resolvedParams = use(params)
   const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -48,11 +49,11 @@ export default function EditWorkoutPlanPage({ params }: { params: { id: string }
 
   useEffect(() => {
     fetchWorkoutPlan()
-  }, [params.id])
+  }, [resolvedParams.id])
 
   const fetchWorkoutPlan = async () => {
     try {
-      const response = await fetch(`/api/workouts/${params.id}`)
+      const response = await fetch(`/api/workouts/${resolvedParams.id}`)
       if (response.ok) {
         const data = await response.json()
         setWorkoutPlan(data)
@@ -113,7 +114,7 @@ export default function EditWorkoutPlanPage({ params }: { params: { id: string }
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/workouts/${params.id}`, {
+      const response = await fetch(`/api/workouts/${resolvedParams.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -194,7 +195,7 @@ export default function EditWorkoutPlanPage({ params }: { params: { id: string }
   }
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen flex flex-col">
       <Header
         title="Edit Workout Plan"
         leftAction={
@@ -212,7 +213,7 @@ export default function EditWorkoutPlanPage({ params }: { params: { id: string }
         }
       />
 
-      <form onSubmit={handleSubmit} className="p-4 space-y-6">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col p-4 space-y-6">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -243,7 +244,7 @@ export default function EditWorkoutPlanPage({ params }: { params: { id: string }
         </Card>
 
         {/* Exercises */}
-        <Card>
+        <Card className="flex-1 flex flex-col">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Exercises ({workoutExercises.length})</CardTitle>
@@ -259,7 +260,7 @@ export default function EditWorkoutPlanPage({ params }: { params: { id: string }
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto">
             {workoutExercises.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">

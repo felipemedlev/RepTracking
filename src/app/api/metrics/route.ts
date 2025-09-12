@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const metrics = await prisma.bodyMetrics.findMany({
+    const metrics = await prisma.bodyMetric.findMany({
       where: {
         userId: session.user.id,
       },
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { weight, bodyFatPercentage } = body
+    const { weight, bodyFatPercentage, recordedAt } = body
 
     if (!weight && !bodyFatPercentage) {
       return NextResponse.json(
@@ -67,12 +67,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const metric = await prisma.bodyMetrics.create({
+    const metric = await prisma.bodyMetric.create({
       data: {
         userId: session.user.id,
         weight: weight || null,
         bodyFatPercentage: bodyFatPercentage || null,
-        recordedAt: new Date(),
+        recordedAt: recordedAt ? new Date(recordedAt) : new Date(),
       },
     })
 
