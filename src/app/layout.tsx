@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { SessionProvider } from "@/components/providers/SessionProvider"
 import { Toaster } from "@/components/ui/toaster"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
           <div className="flex flex-col h-full">
             <main className="flex-1 overflow-auto pb-nav">
               {children}
+              <Analytics />
             </main>
             <BottomNav />
           </div>
