@@ -17,9 +17,9 @@ interface Exercise {
 
 interface WorkoutExercise {
   exercise: Exercise
-  targetSets: number
-  targetReps: number
-  restSeconds: number
+  targetSets: number | string
+  targetReps: number | string
+  restSeconds: number | string
 }
 
 export default function NewWorkoutPlanPage() {
@@ -48,7 +48,7 @@ export default function NewWorkoutPlanPage() {
     }
   }
 
-  const updateWorkoutExercise = (exerciseId: string, field: keyof Omit<WorkoutExercise, 'exercise'>, value: number) => {
+  const updateWorkoutExercise = (exerciseId: string, field: keyof Omit<WorkoutExercise, 'exercise'>, value: number | string) => {
     setWorkoutExercises(prev =>
       prev.map(we =>
         we.exercise.id === exerciseId ? { ...we, [field]: value } : we
@@ -81,9 +81,9 @@ export default function NewWorkoutPlanPage() {
           description: description.trim() || undefined,
           exercises: workoutExercises.map(we => ({
             exerciseId: we.exercise.id,
-            targetSets: we.targetSets,
-            targetReps: we.targetReps,
-            restSeconds: we.restSeconds,
+            targetSets: typeof we.targetSets === 'string' ? parseInt(we.targetSets) || 1 : we.targetSets,
+            targetReps: typeof we.targetReps === 'string' ? parseInt(we.targetReps) || 1 : we.targetReps,
+            restSeconds: typeof we.restSeconds === 'string' ? parseInt(we.restSeconds) || 60 : we.restSeconds,
           })),
         }),
       })
@@ -265,13 +265,22 @@ export default function NewWorkoutPlanPage() {
                           type="number"
                           min="1"
                           max="10"
-                          value={workoutExercise.targetSets}
-                          onChange={(e) => updateWorkoutExercise(
-                            workoutExercise.exercise.id, 
-                            'targetSets', 
-                            parseInt(e.target.value) || 1
-                          )}
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          value={workoutExercise.targetSets || ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? '' : parseInt(e.target.value) || 1
+                            updateWorkoutExercise(
+                              workoutExercise.exercise.id, 
+                              'targetSets', 
+                              value
+                            )
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                              updateWorkoutExercise(workoutExercise.exercise.id, 'targetSets', 1)
+                            }
+                          }}
+                          placeholder="1"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
                         />
                       </div>
                       <div>
@@ -280,13 +289,22 @@ export default function NewWorkoutPlanPage() {
                           type="number"
                           min="1"
                           max="100"
-                          value={workoutExercise.targetReps}
-                          onChange={(e) => updateWorkoutExercise(
-                            workoutExercise.exercise.id, 
-                            'targetReps', 
-                            parseInt(e.target.value) || 1
-                          )}
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          value={workoutExercise.targetReps || ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? '' : parseInt(e.target.value) || 1
+                            updateWorkoutExercise(
+                              workoutExercise.exercise.id, 
+                              'targetReps', 
+                              value
+                            )
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                              updateWorkoutExercise(workoutExercise.exercise.id, 'targetReps', 1)
+                            }
+                          }}
+                          placeholder="10"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
                         />
                       </div>
                       <div>
@@ -296,13 +314,22 @@ export default function NewWorkoutPlanPage() {
                           min="0"
                           max="600"
                           step="15"
-                          value={workoutExercise.restSeconds}
-                          onChange={(e) => updateWorkoutExercise(
-                            workoutExercise.exercise.id, 
-                            'restSeconds', 
-                            parseInt(e.target.value) || 0
-                          )}
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          value={workoutExercise.restSeconds || ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? '' : parseInt(e.target.value) || 0
+                            updateWorkoutExercise(
+                              workoutExercise.exercise.id, 
+                              'restSeconds', 
+                              value
+                            )
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '' || parseInt(e.target.value) < 0) {
+                              updateWorkoutExercise(workoutExercise.exercise.id, 'restSeconds', 60)
+                            }
+                          }}
+                          placeholder="60"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
                         />
                       </div>
                     </div>

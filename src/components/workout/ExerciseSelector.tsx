@@ -120,6 +120,8 @@ export function ExerciseSelector({ onExerciseSelect, selectedExercises }: Exerci
           placeholder="Search exercises..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          clearable
+          onClear={() => setSearch('')}
         />
         
         <div className="flex flex-wrap gap-2">
