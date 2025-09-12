@@ -6,7 +6,12 @@
       "Bash(npx prisma:*)",
       "Bash(pnpm dev:*)",
       "Bash(pnpm db:seed:*)",
-      "Bash(pnpm list:*)"
+      "Bash(pnpm list:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(ipconfig)",
+      "Bash(netsh advfirewall firewall show rule:*)",
+      "Bash(netsh:*)"
     ],
     "deny": [],
     "ask": []

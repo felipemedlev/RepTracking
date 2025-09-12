@@ -1,36 +1,42 @@
 import { HTMLAttributes, forwardRef } from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { cn, touchFeedback, animations } from '@/lib/utils'
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'elevated' | 'outlined' | 'interactive'
+const cardVariants = cva(
+  "rounded-2xl transition-all duration-200 ease-out backdrop-blur-sm",
+  {
+    variants: {
+      variant: {
+        default: "border border-gray-200 bg-white text-gray-900 shadow-sm",
+        elevated: "border-0 bg-white shadow-lg shadow-black/5",
+        outlined: "border-2 border-gray-300 bg-white shadow-none",
+        interactive: "border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-gray-300 cursor-pointer",
+        primary: "border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10",
+        success: "border border-green-200 bg-gradient-to-br from-green-50 to-green-100",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+interface CardProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {
   hover?: boolean
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', hover = false, ...props }, ref) => {
-    const variants = {
-      default: 'border border-gray-200 bg-white shadow-sm',
-      elevated: 'border-0 bg-white shadow-lg shadow-gray-100/50',
-      outlined: 'border-2 border-gray-300 bg-white shadow-none',
-      interactive: 'border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-gray-300 cursor-pointer',
-    }
-
+  ({ className, variant, hover = false, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(
-          // Base styles with improved visual hierarchy
-          'rounded-2xl transition-all duration-200 ease-out',
-          'backdrop-blur-sm', // Subtle glass effect
-          
+          cardVariants({ variant }),
           // Enhanced interactivity
           hover && 'hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.02]',
           hover && touchFeedback.card,
-          
           // Animation entrance
           animations.fadeInUp,
-          
-          variants[variant],
           className
         )}
         {...props}

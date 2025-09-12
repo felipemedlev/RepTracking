@@ -9,7 +9,7 @@ const Progress = React.forwardRef<
   }
 >(({ className, value, variant = "default", ...props }, ref) => {
   const variants = {
-    default: "bg-primary-600",
+    default: "bg-primary",
     success: "bg-green-500",
     warning: "bg-yellow-500", 
     danger: "bg-red-500",
@@ -19,14 +19,14 @@ const Progress = React.forwardRef<
     <ProgressPrimitive.Root
       ref={ref}
       className={cn(
-        "relative h-4 w-full overflow-hidden rounded-full bg-gray-100",
+        "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
         className
       )}
       {...props}
     >
       <ProgressPrimitive.Indicator
         className={cn(
-          "h-full w-full flex-1 transition-all duration-300 ease-out",
+          "h-full w-full flex-1 transition-all duration-500 ease-out",
           variants[variant]
         )}
         style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
