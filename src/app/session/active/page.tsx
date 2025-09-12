@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Header, BackButton } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -55,7 +55,7 @@ interface PreviousSession {
   totalReps: number
 }
 
-export default function SessionPage() {
+function SessionPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const planId = searchParams.get('plan')
@@ -755,5 +755,13 @@ export default function SessionPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SessionPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SessionPageContent />
+    </Suspense>
   )
 }
