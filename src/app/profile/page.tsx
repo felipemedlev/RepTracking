@@ -219,36 +219,59 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <Button
-              variant="outline"
-              className="w-full justify-start"
+              size="lg"
+              className="w-full justify-start bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-0 hover:from-blue-100 hover:to-indigo-100 hover:shadow-md transition-all duration-200"
               onClick={() => router.push('/metrics')}
             >
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              Body Metrics
+              <div className="flex items-center justify-start w-full">
+                <div className="p-2 bg-blue-600 text-white rounded-lg mr-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold">Body Metrics</div>
+                  <div className="text-sm opacity-70">Track your measurements</div>
+                </div>
+              </div>
             </Button>
+            
             <Button
-              variant="outline"
-              className="w-full justify-start"
+              size="lg"
+              className="w-full justify-start bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-0 hover:from-purple-100 hover:to-pink-100 hover:shadow-md transition-all duration-200"
               onClick={() => router.push('/tools')}
             >
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              Fitness Tools
+              <div className="flex items-center justify-start w-full">
+                <div className="p-2 bg-purple-600 text-white rounded-lg mr-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold">Fitness Tools</div>
+                  <div className="text-sm opacity-70">Calculators and utilities</div>
+                </div>
+              </div>
             </Button>
+            
             <Button
-              variant="outline"
-              className="w-full justify-start"
+              size="lg"
+              className="w-full justify-start bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-0 hover:from-green-100 hover:to-emerald-100 hover:shadow-md transition-all duration-200"
               onClick={() => router.push('/progress')}
             >
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-              Progress Analytics
+              <div className="flex items-center justify-start w-full">
+                <div className="p-2 bg-green-600 text-white rounded-lg mr-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold">Progress Analytics</div>
+                  <div className="text-sm opacity-70">View your fitness stats</div>
+                </div>
+              </div>
             </Button>
           </CardContent>
         </Card>
@@ -260,14 +283,21 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <Button
-              variant="outline"
+              size="lg"
+              className="w-full justify-start bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border-0 hover:from-red-100 hover:to-rose-100 hover:shadow-md transition-all duration-200"
               onClick={handleSignOut}
-              className="w-full text-red-600 border-red-200 hover:bg-red-50"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sign Out
+              <div className="flex items-center justify-start w-full">
+                <div className="p-2 bg-red-600 text-white rounded-lg mr-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold">Sign Out</div>
+                  <div className="text-sm opacity-70">End your session</div>
+                </div>
+              </div>
             </Button>
           </CardContent>
         </Card>
