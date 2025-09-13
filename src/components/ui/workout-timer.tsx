@@ -53,7 +53,8 @@ export function WorkoutTimer({
     toggle: toggleTimer,
     reset: resetTimer,
     setSeconds,
-    hasNotificationPermission
+    hasNotificationPermission,
+    updatePermissionState
   } = useBackgroundTimer({
     initialSeconds,
     autoStart,
@@ -101,62 +102,55 @@ export function WorkoutTimer({
   if (compact) {
     return (
       <div className={cn("text-center", className)}>
-        <div className="text-3xl font-bold text-orange-600 mb-2">
+        <div className="text-2xl font-bold text-orange-600 mb-1">
           {formatTime(seconds)}
         </div>
-        <p className="text-sm text-orange-700 mb-1">Rest between sets</p>
-        {hasNotificationPermission && (
-          <p className="text-xs text-orange-600 mb-2">
-            🔔 You&apos;ll get notified when rest is complete
-          </p>
-        )}
-        {!hasNotificationPermission && (
-          <p className="text-xs text-orange-600 mb-2">
-            📳 Vibration enabled • Click bell to enable notifications
-          </p>
-        )}
+        <p className="text-xs text-orange-700 mb-2">Rest between sets</p>
         
-        {/* Rest Time Adjustment Controls */}
-        <div className="flex items-center justify-center gap-2 mb-2">
+        {/* Compact notification status */}
+        <div className="flex items-center justify-center gap-1 mb-2">
+          <span className="text-xs text-orange-600">
+            {hasNotificationPermission ? '🔔 Notifications on' : '📳 Vibration only'}
+          </span>
           <button
-            onClick={() => setSeconds(Math.max(seconds - 30, 0))}
-            className="px-2 py-1 text-sm bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
-          >
-            -30s
-          </button>
-          <button
-            onClick={() => setSeconds(seconds + 30)}
-            className="px-2 py-1 text-sm bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
-          >
-            +30s
-          </button>
-          
-          {/* Notification permission indicator inline */}
-          <Button
-            size="sm"
-            variant="ghost"
-            className={cn(
-              "h-8 px-2 ml-2",
-              hasNotificationPermission ? "text-green-600" : "text-orange-500"
-            )}
             onClick={async () => {
               if (!hasNotificationPermission && 'Notification' in window) {
                 try {
-                  const permission = await Notification.requestPermission()
-                  console.log('Notification permission:', permission)
+                  await Notification.requestPermission()
+                  updatePermissionState()
                 } catch (error) {
                   console.warn('Failed to request notification permission:', error)
                 }
               }
             }}
+            className={cn(
+              "ml-1 p-1 rounded-full hover:bg-orange-100",
+              hasNotificationPermission ? "text-green-600" : "text-orange-500"
+            )}
             title={hasNotificationPermission ? "Notifications enabled" : "Click to enable notifications"}
           >
             {hasNotificationPermission ? (
-              <Bell className="h-4 w-4" />
+              <Bell className="h-3 w-3" />
             ) : (
-              <BellOff className="h-4 w-4" />
+              <BellOff className="h-3 w-3" />
             )}
-          </Button>
+          </button>
+        </div>
+        
+        {/* Compact time adjustment controls */}
+        <div className="flex items-center justify-center gap-1">
+          <button
+            onClick={() => setSeconds(Math.max(seconds - 30, 0))}
+            className="px-2 py-1 text-xs bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
+          >
+            -30s
+          </button>
+          <button
+            onClick={() => setSeconds(seconds + 30)}
+            className="px-2 py-1 text-xs bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
+          >
+            +30s
+          </button>
         </div>
       </div>
     )

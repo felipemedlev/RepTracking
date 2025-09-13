@@ -60,6 +60,7 @@ function SessionPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const planId = searchParams.get('plan')
+  const sessionId = searchParams.get('sessionId')
   
   const [session, setSession] = useState<WorkoutSession | null>(null)
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
@@ -79,7 +80,11 @@ function SessionPageContent() {
   const notificationTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
-    if (planId) {
+    if (sessionId) {
+      // Resume existing session
+      resumeWorkoutSession(sessionId)
+    } else if (planId) {
+      // Start new session
       startWorkoutSession()
     } else {
       router.push('/workouts')
@@ -90,7 +95,7 @@ function SessionPageContent() {
         clearTimeout(notificationTimeoutRef.current)
       }
     }
-  }, [planId, router])
+  }, [planId, sessionId, router])
 
   useEffect(() => {
     if (session && session.workoutPlan.workoutExercises.length > 0) {
@@ -127,6 +132,36 @@ function SessionPageContent() {
     setTimerKey(prev => prev + 1)
   }
 
+  const resumeWorkoutSession = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}`)
+      if (response.ok) {
+        const sessionData = await response.json()
+        // Ensure sets array exists
+        if (!sessionData.sets) {
+          sessionData.sets = []
+        }
+        setSession(sessionData)
+        
+        // Set initial reps target for the current exercise
+        if (sessionData.workoutPlan.workoutExercises.length > 0) {
+          setCurrentSetData(prev => ({
+            ...prev,
+            reps: sessionData.workoutPlan.workoutExercises[0].targetReps.toString()
+          }))
+        }
+      } else {
+        // Session not found, redirect to workouts
+        router.push('/workouts')
+      }
+    } catch (error) {
+      console.error('Error resuming workout session:', error)
+      router.push('/workouts')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const fetchPreviousSessionData = async () => {
     if (!session) return
     
@@ -156,6 +191,10 @@ function SessionPageContent() {
 
       if (response.ok) {
         const sessionData = await response.json()
+        
+        // Redirect to include sessionId in URL to prevent duplicate sessions
+        router.replace(`/session/active?plan=${planId}&sessionId=${sessionData.id}`)
+        
         // Ensure sets array exists
         if (!sessionData.sets) {
           sessionData.sets = []

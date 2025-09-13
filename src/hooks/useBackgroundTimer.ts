@@ -35,14 +35,20 @@ export function useBackgroundTimer({
   const workerRef = useRef<Worker | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const notificationPermission = useRef<NotificationPermission>('default')
+  
+  // Function to update permission state
+  const updatePermissionState = useCallback(() => {
+    if ('Notification' in window) {
+      const newPermission = Notification.permission
+      notificationPermission.current = newPermission
+      setPermissionState(newPermission)
+    }
+  }, [])
 
   // Request notification permission on mount
   useEffect(() => {
-    if ('Notification' in window) {
-      notificationPermission.current = Notification.permission
-      setPermissionState(Notification.permission)
-      // Don't auto-request permission, let user click the bell icon
-    }
+    updatePermissionState()
+    // Don't auto-request permission, let user click the bell icon
 
     // Create audio element for sound notification
     if (playSound) {
@@ -261,7 +267,8 @@ export function useBackgroundTimer({
     reset,
     toggle,
     setSeconds,
-    hasNotificationPermission: permissionState === 'granted'
+    hasNotificationPermission: permissionState === 'granted',
+    updatePermissionState
   }
 }
 
