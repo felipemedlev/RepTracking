@@ -517,24 +517,31 @@ function SessionPageContent() {
 
         {/* Rest Timer */}
         {isResting && (
-          <div>
-            <WorkoutTimer
-              initialSeconds={restDuration}
-              autoStart={true}
-              onComplete={onRestComplete}
-              variant="rest"
-              className="mb-4"
-            />
-            <div className="flex gap-2 justify-center">
-              <Button
-                size="sm"
-                onClick={skipRest}
-                variant="outline"
-              >
-                Skip Rest
-              </Button>
-            </div>
-          </div>
+          <Card className="bg-orange-50 border-orange-200">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <WorkoutTimer
+                  key={`rest-${restDuration}-${Date.now()}`}
+                  initialSeconds={restDuration}
+                  autoStart={true}
+                  onComplete={onRestComplete}
+                  variant="rest"
+                  compact={true}
+                  className="mb-4"
+                />
+                
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    size="sm"
+                    onClick={skipRest}
+                    variant="outline"
+                  >
+                    Skip Rest
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Set Entry */}

@@ -13,6 +13,7 @@ interface WorkoutTimerProps {
   onComplete?: () => void
   variant?: 'rest' | 'exercise' | 'stopwatch'
   className?: string
+  compact?: boolean
 }
 
 export function WorkoutTimer({
@@ -20,7 +21,8 @@ export function WorkoutTimer({
   autoStart = false,
   onComplete,
   variant = 'rest',
-  className
+  className,
+  compact = false
 }: WorkoutTimerProps) {
   const getNotificationTitle = () => {
     switch (variant) {
@@ -95,6 +97,72 @@ export function WorkoutTimer({
 
   const styles = getVariantStyles()
   const progress = ((initialSeconds - seconds) / initialSeconds) * 100
+
+  if (compact) {
+    return (
+      <div className={cn("text-center", className)}>
+        <div className="text-2xl font-bold text-orange-600 mb-2">
+          {formatTime(seconds)}
+        </div>
+        <p className="text-sm text-orange-700 mb-1">Rest between sets</p>
+        {hasNotificationPermission && (
+          <p className="text-xs text-orange-600 mb-3">
+            🔔 You&apos;ll get notified when rest is complete
+          </p>
+        )}
+        {!hasNotificationPermission && (
+          <p className="text-xs text-orange-600 mb-3">
+            📳 Vibration enabled • Click bell to enable notifications
+          </p>
+        )}
+        
+        {/* Rest Time Adjustment Controls */}
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <button
+            onClick={() => setSeconds(Math.max(seconds - 30, 0))}
+            className="px-2 py-1 text-sm bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
+          >
+            -30s
+          </button>
+          <button
+            onClick={() => setSeconds(seconds + 30)}
+            className="px-2 py-1 text-sm bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
+          >
+            +30s
+          </button>
+        </div>
+
+        {/* Notification permission indicator */}
+        <div className="flex justify-center mb-3">
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "h-8 w-8",
+              hasNotificationPermission ? "text-green-600" : "text-orange-500"
+            )}
+            onClick={async () => {
+              if (!hasNotificationPermission && 'Notification' in window) {
+                try {
+                  const permission = await Notification.requestPermission()
+                  console.log('Notification permission:', permission)
+                } catch (error) {
+                  console.warn('Failed to request notification permission:', error)
+                }
+              }
+            }}
+            title={hasNotificationPermission ? "Notifications enabled" : "Click to enable notifications"}
+          >
+            {hasNotificationPermission ? (
+              <Bell className="h-4 w-4" />
+            ) : (
+              <BellOff className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <Card className={cn("p-6 text-center", styles.card, styles.glow, className)}>
@@ -180,9 +248,14 @@ export function WorkoutTimer({
             "h-12 w-12",
             hasNotificationPermission ? "text-green-600" : "text-orange-500"
           )}
-          onClick={() => {
+          onClick={async () => {
             if (!hasNotificationPermission && 'Notification' in window) {
-              Notification.requestPermission()
+              try {
+                const permission = await Notification.requestPermission()
+                console.log('Notification permission:', permission)
+              } catch (error) {
+                console.warn('Failed to request notification permission:', error)
+              }
             }
           }}
           title={hasNotificationPermission ? "Notifications enabled" : "Click to enable notifications"}

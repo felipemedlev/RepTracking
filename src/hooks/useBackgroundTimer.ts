@@ -31,6 +31,7 @@ export function useBackgroundTimer({
     isCompleted: false
   })
 
+  const [permissionState, setPermissionState] = useState<NotificationPermission>('default')
   const workerRef = useRef<Worker | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const notificationPermission = useRef<NotificationPermission>('default')
@@ -39,23 +40,20 @@ export function useBackgroundTimer({
   useEffect(() => {
     if ('Notification' in window) {
       notificationPermission.current = Notification.permission
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-          notificationPermission.current = permission
-        })
-      }
+      setPermissionState(Notification.permission)
+      // Don't auto-request permission, let user click the bell icon
     }
 
     // Create audio element for sound notification
     if (playSound) {
-      audioRef.current = new Audio()
-      // Create a simple beep sound using Web Audio API
-      createBeepSound().then(audioUrl => {
-        if (audioRef.current) {
-          audioRef.current.src = audioUrl
-          audioRef.current.preload = 'auto'
-        }
-      })
+      // Use a data URL for a simple beep that works on iPhone
+      const beepData = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+G'
+      audioRef.current = new Audio(beepData)
+      audioRef.current.preload = 'auto'
+      audioRef.current.volume = 0.8
+      
+      // Prepare audio for iPhone (requires user interaction first)
+      audioRef.current.load()
     }
 
     return () => {
@@ -75,26 +73,59 @@ export function useBackgroundTimer({
 
     // Play sound notification
     if (playSound && audioRef.current) {
-      audioRef.current.play().catch(console.error)
+      // Create multiple beeps for better notification
+      const playBeeps = async () => {
+        try {
+          for (let i = 0; i < 3; i++) {
+            await audioRef.current?.play()
+            await new Promise(resolve => setTimeout(resolve, 200))
+            audioRef.current?.pause()
+            audioRef.current!.currentTime = 0
+            await new Promise(resolve => setTimeout(resolve, 100))
+          }
+        } catch (error) {
+          console.warn('Audio play failed:', error)
+        }
+      }
+      playBeeps()
     }
 
     // Show browser notification
     if ('Notification' in window && notificationPermission.current === 'granted') {
-      const notification = new Notification(notificationTitle, {
-        body: notificationBody,
-        // icon: '/icon-192x192.png', // Will be added when app icons are created
-        // badge: '/icon-192x192.png',
-        tag: 'workout-timer',
-        requireInteraction: true,
-        silent: !playSound
-      })
+      try {
+        const notification = new Notification(notificationTitle, {
+          body: notificationBody,
+          // icon: '/icon-192x192.png', // Will be added when app icons are created
+          // badge: '/icon-192x192.png',
+          tag: 'workout-timer',
+          requireInteraction: true,
+          silent: false, // Always use sound for iPhone
+          vibrate: [200, 100, 200, 100, 200] // Vibration pattern for mobile
+        })
 
-      // Auto-close notification after 10 seconds
-      setTimeout(() => notification.close(), 10000)
+        // Auto-close notification after 15 seconds (longer for mobile)
+        setTimeout(() => {
+          try {
+            notification.close()
+          } catch (e) {
+            // Ignore close errors
+          }
+        }, 15000)
 
-      notification.onclick = () => {
-        window.focus()
-        notification.close()
+        notification.onclick = () => {
+          try {
+            window.focus()
+            notification.close()
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+
+        notification.onerror = (error) => {
+          console.warn('Notification error:', error)
+        }
+      } catch (error) {
+        console.warn('Failed to show notification:', error)
       }
     }
 
@@ -225,48 +256,7 @@ export function useBackgroundTimer({
     reset,
     toggle,
     setSeconds,
-    hasNotificationPermission: notificationPermission.current === 'granted'
+    hasNotificationPermission: permissionState === 'granted'
   }
 }
 
-// Helper function to create a beep sound using Web Audio API
-async function createBeepSound(): Promise<string> {
-  try {
-    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
-    const oscillator = audioContext.createOscillator()
-    const gainNode = audioContext.createGain()
-    
-    oscillator.connect(gainNode)
-    gainNode.connect(audioContext.destination)
-    
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
-    oscillator.type = 'sine'
-    
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime)
-    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01)
-    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5)
-    
-    oscillator.start(audioContext.currentTime)
-    oscillator.stop(audioContext.currentTime + 0.5)
-    
-    // Create a MediaRecorder to capture the audio as a blob
-    const stream = audioContext.destination.stream
-    const mediaRecorder = new MediaRecorder(stream)
-    const chunks: Blob[] = []
-    
-    return new Promise((resolve) => {
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data)
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' })
-        resolve(URL.createObjectURL(blob))
-      }
-      
-      mediaRecorder.start()
-      setTimeout(() => mediaRecorder.stop(), 600)
-    })
-  } catch (error) {
-    console.warn('Could not create beep sound:', error)
-    // Fallback: return empty data URL for silent audio
-    return 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+GmqlcBCIK/6bF//+8'
-  }
-}
