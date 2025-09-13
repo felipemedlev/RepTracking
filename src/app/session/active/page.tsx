@@ -69,6 +69,7 @@ function SessionPageContent() {
   })
   const [restDuration, setRestDuration] = useState(0)
   const [isResting, setIsResting] = useState(false)
+  const [timerKey, setTimerKey] = useState(0)
   const [loading, setLoading] = useState(true)
   const [submittingSet, setSubmittingSet] = useState(false)
   const [previousSessions, setPreviousSessions] = useState<PreviousSession[]>([])
@@ -123,6 +124,7 @@ function SessionPageContent() {
     // Reset rest state
     setIsResting(false)
     setRestDuration(0)
+    setTimerKey(prev => prev + 1)
   }
 
   const fetchPreviousSessionData = async () => {
@@ -236,6 +238,7 @@ function SessionPageContent() {
         const duration = customRestTime || currentExercise.restSeconds
         setRestDuration(duration)
         setIsResting(true)
+        setTimerKey(prev => prev + 1) // Force timer to restart
 
         // Reset form but keep weight for next set
         setCurrentSetData(prev => ({
@@ -257,6 +260,7 @@ function SessionPageContent() {
     }
     setIsResting(false)
     setRestDuration(0)
+    setTimerKey(prev => prev + 1)
   }
 
   const nextExercise = () => {
@@ -521,7 +525,7 @@ function SessionPageContent() {
             <CardContent className="p-4">
               <div className="text-center">
                 <WorkoutTimer
-                  key={`rest-${restDuration}-${Date.now()}`}
+                  key={`rest-timer-${timerKey}`}
                   initialSeconds={restDuration}
                   autoStart={true}
                   onComplete={onRestComplete}

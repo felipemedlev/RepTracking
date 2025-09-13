@@ -202,6 +202,11 @@ export function useBackgroundTimer({
 
     // Initialize worker with initial seconds
     workerRef.current.postMessage({ action: 'set', seconds: initialSeconds })
+    
+    // Auto-start if requested
+    if (autoStart) {
+      workerRef.current.postMessage({ action: 'start' })
+    }
 
     return () => {
       if (workerRef.current) {

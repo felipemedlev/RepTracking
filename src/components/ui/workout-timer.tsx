@@ -101,23 +101,23 @@ export function WorkoutTimer({
   if (compact) {
     return (
       <div className={cn("text-center", className)}>
-        <div className="text-2xl font-bold text-orange-600 mb-2">
+        <div className="text-3xl font-bold text-orange-600 mb-2">
           {formatTime(seconds)}
         </div>
         <p className="text-sm text-orange-700 mb-1">Rest between sets</p>
         {hasNotificationPermission && (
-          <p className="text-xs text-orange-600 mb-3">
+          <p className="text-xs text-orange-600 mb-2">
             🔔 You&apos;ll get notified when rest is complete
           </p>
         )}
         {!hasNotificationPermission && (
-          <p className="text-xs text-orange-600 mb-3">
+          <p className="text-xs text-orange-600 mb-2">
             📳 Vibration enabled • Click bell to enable notifications
           </p>
         )}
         
         {/* Rest Time Adjustment Controls */}
-        <div className="flex items-center justify-center gap-2 mb-3">
+        <div className="flex items-center justify-center gap-2 mb-2">
           <button
             onClick={() => setSeconds(Math.max(seconds - 30, 0))}
             className="px-2 py-1 text-sm bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
@@ -130,15 +130,13 @@ export function WorkoutTimer({
           >
             +30s
           </button>
-        </div>
-
-        {/* Notification permission indicator */}
-        <div className="flex justify-center mb-3">
+          
+          {/* Notification permission indicator inline */}
           <Button
-            size="icon"
+            size="sm"
             variant="ghost"
             className={cn(
-              "h-8 w-8",
+              "h-8 px-2 ml-2",
               hasNotificationPermission ? "text-green-600" : "text-orange-500"
             )}
             onClick={async () => {
