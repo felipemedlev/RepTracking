@@ -396,11 +396,7 @@ function SessionPageContent() {
         title={session.workoutPlan.name}
         leftAction={
           <BackButton 
-            onClick={() => {
-              if (confirm('Are you sure you want to exit this workout? Your progress will be saved.')) {
-                finishWorkout()
-              }
-            }} 
+            onClick={() => router.push('/session')} 
           />
         }
         rightAction={

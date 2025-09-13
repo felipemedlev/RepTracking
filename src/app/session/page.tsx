@@ -33,6 +33,8 @@ export default function SessionsPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'recent'>('active')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [finishConfirm, setFinishConfirm] = useState<string | null>(null)
+  const [finishingSession, setFinishingSession] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -91,6 +93,33 @@ export default function SessionsPage() {
     return sets.reduce((total, set) => {
       return total + ((set.weight || 0) * (set.reps || 0))
     }, 0)
+  }
+
+  const handleFinishSession = async (sessionId: string) => {
+    setFinishingSession(sessionId)
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          completedAt: new Date().toISOString(),
+        }),
+      })
+      
+      if (response.ok) {
+        // Refresh sessions to update the UI
+        fetchSessions()
+        setFinishConfirm(null)
+      } else {
+        console.error('Failed to finish session')
+      }
+    } catch (error) {
+      console.error('Error finishing session:', error)
+    } finally {
+      setFinishingSession(null)
+    }
   }
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -227,12 +256,22 @@ export default function SessionsPage() {
                         <div className="text-xs text-green-700">Duration</div>
                       </div>
                     </div>
-                    <Button
-                      className="w-full"
-                      onClick={() => router.push(`/session/active?plan=${sessionData.workoutPlanId}&sessionId=${sessionData.id}`)}
-                    >
-                      Continue Session
-                    </Button>
+                    <div className="flex gap-3">
+                      <Button
+                        className="flex-1"
+                        onClick={() => router.push(`/session/active?plan=${sessionData.workoutPlanId}&sessionId=${sessionData.id}`)}
+                      >
+                        Continue Session
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setFinishConfirm(sessionData.id)}
+                        disabled={finishingSession === sessionData.id}
+                      >
+                        {finishingSession === sessionData.id ? 'Finishing...' : 'Finish Session'}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))
@@ -324,6 +363,39 @@ export default function SessionsPage() {
           </div>
         )}
       </div>
+
+      {/* Finish Confirmation Modal */}
+      {finishConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-blue-900">Finish Session</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to finish this workout session? The session will be marked as complete and moved to your recent sessions.
+              </p>
+              <div className="flex space-x-3">
+                <Button
+                  onClick={() => handleFinishSession(finishConfirm)}
+                  className="flex-1"
+                  disabled={finishingSession === finishConfirm}
+                >
+                  {finishingSession === finishConfirm ? 'Finishing...' : 'Finish Session'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setFinishConfirm(null)}
+                  className="flex-1"
+                  disabled={finishingSession === finishConfirm}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (

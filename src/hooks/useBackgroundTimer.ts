@@ -35,6 +35,11 @@ export function useBackgroundTimer({
   const workerRef = useRef<Worker | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const notificationPermission = useRef<NotificationPermission>('default')
+  const fallbackTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const startTimeRef = useRef<number>(0)
+  const lastUpdateRef = useRef<number>(0)
+  const wakeLockRef = useRef<any>(null)
+  const isWorkerActive = useRef<boolean>(false)
   
   // Function to update permission state
   const updatePermissionState = useCallback(() => {
@@ -42,6 +47,27 @@ export function useBackgroundTimer({
       const newPermission = Notification.permission
       notificationPermission.current = newPermission
       setPermissionState(newPermission)
+    }
+  }, [])
+
+  // Request wake lock to keep screen active
+  const requestWakeLock = useCallback(async () => {
+    try {
+      if ('wakeLock' in navigator && !wakeLockRef.current) {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
+        console.log('Wake lock acquired')
+      }
+    } catch (error) {
+      console.warn('Wake lock failed:', error)
+    }
+  }, [])
+
+  // Release wake lock
+  const releaseWakeLock = useCallback(() => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release()
+      wakeLockRef.current = null
+      console.log('Wake lock released')
     }
   }, [])
 
@@ -67,8 +93,12 @@ export function useBackgroundTimer({
         audioRef.current.pause()
         audioRef.current = null
       }
+      if (fallbackTimerRef.current) {
+        clearInterval(fallbackTimerRef.current)
+      }
+      releaseWakeLock()
     }
-  }, [playSound])
+  }, [playSound, releaseWakeLock])
 
   // Handle timer completion
   const handleTimerComplete = useCallback(() => {
@@ -135,9 +165,12 @@ export function useBackgroundTimer({
       }
     }
 
+    // Release wake lock when timer completes
+    releaseWakeLock()
+
     // Call custom completion handler
     onComplete?.()
-  }, [notificationTitle, notificationBody, playSound, onComplete])
+  }, [notificationTitle, notificationBody, playSound, onComplete, releaseWakeLock])
 
   // Create Web Worker for background timing
   useEffect(() => {
@@ -197,13 +230,24 @@ export function useBackgroundTimer({
 
     workerRef.current.onmessage = (e) => {
       const { type, seconds } = e.data
+      isWorkerActive.current = true
 
       if (type === 'tick') {
         setState(prev => ({ ...prev, seconds }))
+        // Stop fallback timer if worker is working
+        if (fallbackTimerRef.current) {
+          clearInterval(fallbackTimerRef.current)
+          fallbackTimerRef.current = null
+        }
       } else if (type === 'complete') {
         setState(prev => ({ ...prev, isRunning: false, isCompleted: true, seconds: 0 }))
         handleTimerComplete()
       }
+    }
+
+    workerRef.current.onerror = () => {
+      console.warn('Web Worker failed, falling back to setInterval')
+      isWorkerActive.current = false
     }
 
     // Initialize worker with initial seconds
@@ -221,18 +265,103 @@ export function useBackgroundTimer({
     }
   }, [initialSeconds, handleTimerComplete])
 
+  // Fallback timer system for when Web Worker fails
+  const startFallbackTimer = useCallback(() => {
+    // Wait 3 seconds to see if Web Worker is working before starting fallback
+    setTimeout(() => {
+      if (isWorkerActive.current || fallbackTimerRef.current) {
+        return // Worker is active or fallback already running
+      }
+
+      console.log('Starting fallback timer')
+      startTimeRef.current = Date.now()
+      lastUpdateRef.current = state.seconds
+
+      fallbackTimerRef.current = setInterval(() => {
+        // Don't run if worker became active
+        if (isWorkerActive.current) {
+          clearInterval(fallbackTimerRef.current!)
+          fallbackTimerRef.current = null
+          return
+        }
+
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
+        const newSeconds = Math.max(lastUpdateRef.current - elapsed, 0)
+        
+        setState(prev => {
+          if (prev.seconds !== newSeconds) {
+            if (newSeconds <= 0 && prev.seconds > 0) {
+              handleTimerComplete()
+              return { ...prev, seconds: 0, isRunning: false, isCompleted: true }
+            }
+            return { ...prev, seconds: newSeconds }
+          }
+          return prev
+        })
+
+        if (newSeconds <= 0) {
+          clearInterval(fallbackTimerRef.current!)
+          fallbackTimerRef.current = null
+        }
+      }, 1000)
+    }, 3000) // 3 second delay
+  }, [state.seconds, handleTimerComplete])
+
+  // Page Visibility API to handle tab switching and mobile background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page is hidden (tab switched or mobile locked)
+        console.log('Page hidden - starting fallback timer')
+        if (state.isRunning) {
+          startTimeRef.current = Date.now()
+          lastUpdateRef.current = state.seconds
+        }
+      } else {
+        // Page is visible again
+        console.log('Page visible - syncing timer')
+        if (state.isRunning && startTimeRef.current > 0) {
+          const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
+          const newSeconds = Math.max(lastUpdateRef.current - elapsed, 0)
+          
+          setState(prev => ({ ...prev, seconds: newSeconds }))
+          
+          if (newSeconds <= 0) {
+            handleTimerComplete()
+            setState(prev => ({ ...prev, isRunning: false, isCompleted: true, seconds: 0 }))
+          }
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [state.isRunning, state.seconds, handleTimerComplete])
+
   // Timer controls
   const start = useCallback(() => {
     if (state.seconds > 0) {
       setState(prev => ({ ...prev, isRunning: true, isCompleted: false }))
+      isWorkerActive.current = false // Reset worker status
       workerRef.current?.postMessage({ action: 'start' })
+      startFallbackTimer()
+      requestWakeLock() // Request wake lock when starting timer
     }
-  }, [state.seconds])
+  }, [state.seconds, startFallbackTimer, requestWakeLock])
 
   const pause = useCallback(() => {
     setState(prev => ({ ...prev, isRunning: false }))
+    isWorkerActive.current = false
     workerRef.current?.postMessage({ action: 'pause' })
-  }, [])
+    if (fallbackTimerRef.current) {
+      clearInterval(fallbackTimerRef.current)
+      fallbackTimerRef.current = null
+    }
+    releaseWakeLock() // Release wake lock when pausing
+  }, [releaseWakeLock])
 
   const reset = useCallback(() => {
     setState({
@@ -240,8 +369,14 @@ export function useBackgroundTimer({
       isRunning: false,
       isCompleted: false
     })
+    isWorkerActive.current = false
     workerRef.current?.postMessage({ action: 'reset', seconds: initialSeconds })
-  }, [initialSeconds])
+    if (fallbackTimerRef.current) {
+      clearInterval(fallbackTimerRef.current)
+      fallbackTimerRef.current = null
+    }
+    releaseWakeLock() // Release wake lock when resetting
+  }, [initialSeconds, releaseWakeLock])
 
   const setSeconds = useCallback((newSeconds: number) => {
     setState(prev => ({
@@ -250,6 +385,7 @@ export function useBackgroundTimer({
       isCompleted: false
     }))
     workerRef.current?.postMessage({ action: 'set', seconds: newSeconds })
+    lastUpdateRef.current = newSeconds
   }, [])
 
   const toggle = useCallback(() => {

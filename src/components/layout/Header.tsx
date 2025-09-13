@@ -41,15 +41,13 @@ export function Header({ title, subtitle, leftAction, rightAction, className }: 
 
 export function BackButton({ onClick }: { onClick?: () => void }) {
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={onClick}
-      className="rounded-full flex items-center justify-center"
+      className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
     >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+      <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
-    </Button>
+    </button>
   )
 }
