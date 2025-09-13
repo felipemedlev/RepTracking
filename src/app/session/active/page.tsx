@@ -6,6 +6,7 @@ import { Header, BackButton } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { WorkoutTimer } from '@/components/ui/workout-timer'
 
 interface Exercise {
   id: string
@@ -66,16 +67,14 @@ function SessionPageContent() {
     reps: '',
     weight: ''
   })
-  const [restTimer, setRestTimer] = useState(0)
+  const [restDuration, setRestDuration] = useState(0)
   const [isResting, setIsResting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submittingSet, setSubmittingSet] = useState(false)
   const [previousSessions, setPreviousSessions] = useState<PreviousSession[]>([])
   const [showPreviousData, setShowPreviousData] = useState(false)
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default')
   const [customRestTime, setCustomRestTime] = useState<number | null>(null)
   const [notification, setNotification] = useState<{ type: 'error' | 'success' | 'info', message: string } | null>(null)
-  const timerRef = useRef<NodeJS.Timeout>()
   const notificationTimeoutRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
@@ -84,50 +83,13 @@ function SessionPageContent() {
     } else {
       router.push('/workouts')
     }
-
-    // Request notification permission
-    if ('Notification' in window) {
-      Notification.requestPermission().then(permission => {
-        setNotificationPermission(permission)
-      })
-    }
     
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
       if (notificationTimeoutRef.current) {
         clearTimeout(notificationTimeoutRef.current)
       }
     }
   }, [planId, router])
-
-  useEffect(() => {
-    if (isResting && restTimer > 0) {
-      timerRef.current = setInterval(() => {
-        setRestTimer(prev => {
-          if (prev <= 1) {
-            // Get current exercise name for notification
-            const currentExercise = session?.workoutPlan.workoutExercises[currentExerciseIndex]
-            const exerciseName = currentExercise?.exercise.name || 'your exercise'
-            
-            // Trigger notifications and vibration
-            onRestComplete(exerciseName)
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current)
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
-    }
-  }, [isResting, restTimer, session, currentExerciseIndex])
 
   useEffect(() => {
     if (session && session.workoutPlan.workoutExercises.length > 0) {
@@ -157,41 +119,10 @@ function SessionPageContent() {
     }
   }
 
-  // Vibration and notification functions
-  const triggerVibration = () => {
-    // Haptic feedback for mobile devices
-    if ('vibrate' in navigator) {
-      // Pattern: vibrate for 200ms, pause 100ms, vibrate 200ms, pause 100ms, vibrate 200ms
-      navigator.vibrate([200, 100, 200, 100, 200])
-    }
-  }
-
-  const showRestCompleteNotification = (exerciseName: string) => {
-    if (notificationPermission === 'granted') {
-      const notification = new Notification('Rest Complete! 💪', {
-        body: `Time to continue with ${exerciseName}`,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        tag: 'rest-complete',
-        silent: false,
-        requireInteraction: true
-      })
-      
-      // Auto-close after 5 seconds
-      setTimeout(() => notification.close(), 5000)
-    }
-  }
-
-  const onRestComplete = (exerciseName: string) => {
-    // Trigger vibration
-    triggerVibration()
-    
-    // Show notification
-    showRestCompleteNotification(exerciseName)
-    
+  const onRestComplete = () => {
     // Reset rest state
     setIsResting(false)
-    setRestTimer(0)
+    setRestDuration(0)
   }
 
   const fetchPreviousSessionData = async () => {
@@ -302,8 +233,8 @@ function SessionPageContent() {
         showNotification('success', `Set ${currentExerciseSets.length + 1} logged successfully!`)
 
         // Start rest timer (use custom rest time if set, otherwise default)
-        const restDuration = customRestTime || currentExercise.restSeconds
-        setRestTimer(restDuration)
+        const duration = customRestTime || currentExercise.restSeconds
+        setRestDuration(duration)
         setIsResting(true)
 
         // Reset form but keep weight for next set
@@ -325,7 +256,7 @@ function SessionPageContent() {
       navigator.vibrate(50) // Short vibration
     }
     setIsResting(false)
-    setRestTimer(0)
+    setRestDuration(0)
   }
 
   const nextExercise = () => {
@@ -376,11 +307,6 @@ function SessionPageContent() {
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
 
   const getExerciseSets = (exerciseId: string) => {
     return session?.sets?.filter(set => set.exerciseId === exerciseId) || []
@@ -591,57 +517,24 @@ function SessionPageContent() {
 
         {/* Rest Timer */}
         {isResting && (
-          <Card className="bg-orange-50 border-orange-200">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600 mb-2">
-                  {formatTime(restTimer)}
-                </div>
-                <p className="text-sm text-orange-700 mb-1">Rest between sets</p>
-                {notificationPermission === 'granted' && (
-                  <p className="text-xs text-orange-600 mb-3">
-                    🔔 You&apos;ll get notified when rest is complete
-                  </p>
-                )}
-                {notificationPermission === 'denied' && (
-                  <p className="text-xs text-orange-600 mb-3">
-                    📳 Vibration enabled
-                  </p>
-                )}
-                {notificationPermission === 'default' && (
-                  <p className="text-xs text-orange-600 mb-3">
-                    📳 Vibration enabled
-                  </p>
-                )}
-                
-                {/* Rest Time Adjustment Controls */}
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <button
-                    onClick={() => setRestTimer(prev => Math.max(prev - 30, 0))}
-                    className="px-2 py-1 text-sm bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
-                  >
-                    -30s
-                  </button>
-                  <button
-                    onClick={() => setRestTimer(prev => prev + 30)}
-                    className="px-2 py-1 text-sm bg-orange-200 text-orange-800 rounded hover:bg-orange-300"
-                  >
-                    +30s
-                  </button>
-                </div>
-
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    size="sm"
-                    onClick={skipRest}
-                    variant="outline"
-                  >
-                    Skip Rest
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div>
+            <WorkoutTimer
+              initialSeconds={restDuration}
+              autoStart={true}
+              onComplete={onRestComplete}
+              variant="rest"
+              className="mb-4"
+            />
+            <div className="flex gap-2 justify-center">
+              <Button
+                size="sm"
+                onClick={skipRest}
+                variant="outline"
+              >
+                Skip Rest
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Set Entry */}
