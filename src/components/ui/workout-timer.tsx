@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { Play, Pause, RotateCcw } from "lucide-react"
+import { Play, Pause, RotateCcw, Bell, BellOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "./Button"
 import { Card } from "./Card"
+import { useBackgroundTimer } from "@/hooks/useBackgroundTimer"
 
 interface WorkoutTimerProps {
   initialSeconds?: number
@@ -21,52 +22,44 @@ export function WorkoutTimer({
   variant = 'rest',
   className
 }: WorkoutTimerProps) {
-  const [seconds, setSeconds] = React.useState(initialSeconds)
-  const [isRunning, setIsRunning] = React.useState(autoStart)
-  const [isCompleted, setIsCompleted] = React.useState(false)
-
-  const intervalRef = React.useRef<NodeJS.Timeout | null>(null)
-
-  React.useEffect(() => {
-    if (isRunning && seconds > 0) {
-      intervalRef.current = setInterval(() => {
-        setSeconds(prev => {
-          if (prev <= 1) {
-            setIsRunning(false)
-            setIsCompleted(true)
-            onComplete?.()
-            // Haptic feedback for completion
-            if ('vibrate' in navigator) {
-              navigator.vibrate([100, 50, 100, 50, 100])
-            }
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
+  const getNotificationTitle = () => {
+    switch (variant) {
+      case 'rest':
+        return 'Rest Timer Complete'
+      case 'exercise':
+        return 'Exercise Timer Complete'
+      default:
+        return 'Timer Complete'
     }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [isRunning, seconds, onComplete])
-
-  const toggleTimer = () => {
-    setIsRunning(!isRunning)
-    setIsCompleted(false)
   }
 
-  const resetTimer = () => {
-    setSeconds(initialSeconds)
-    setIsRunning(false)
-    setIsCompleted(false)
+  const getNotificationBody = () => {
+    switch (variant) {
+      case 'rest':
+        return 'Your rest period is over. Ready for the next set!'
+      case 'exercise':
+        return 'Exercise time is up! Time for a rest.'
+      default:
+        return 'Your timer has finished.'
+    }
   }
+
+  const {
+    seconds,
+    isRunning,
+    isCompleted,
+    toggle: toggleTimer,
+    reset: resetTimer,
+    setSeconds,
+    hasNotificationPermission
+  } = useBackgroundTimer({
+    initialSeconds,
+    autoStart,
+    onComplete,
+    notificationTitle: getNotificationTitle(),
+    notificationBody: getNotificationBody(),
+    playSound: true
+  })
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60)
@@ -178,6 +171,28 @@ export function WorkoutTimer({
         >
           <RotateCcw className="h-5 w-5" />
         </Button>
+
+        {/* Notification permission indicator */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className={cn(
+            "h-12 w-12",
+            hasNotificationPermission ? "text-green-600" : "text-orange-500"
+          )}
+          onClick={() => {
+            if (!hasNotificationPermission && 'Notification' in window) {
+              Notification.requestPermission()
+            }
+          }}
+          title={hasNotificationPermission ? "Notifications enabled" : "Click to enable notifications"}
+        >
+          {hasNotificationPermission ? (
+            <Bell className="h-5 w-5" />
+          ) : (
+            <BellOff className="h-5 w-5" />
+          )}
+        </Button>
       </div>
 
       {/* Quick time adjustments */}
@@ -189,8 +204,6 @@ export function WorkoutTimer({
             variant="ghost"
             onClick={() => {
               setSeconds(time)
-              setIsCompleted(false)
-              if (isRunning) setIsRunning(false)
             }}
             className={cn(
               "h-8 px-2 text-xs",
